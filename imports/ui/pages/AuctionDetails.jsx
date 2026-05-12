@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTracker } from "meteor/react-meteor-data";
 import { Meteor } from "meteor/meteor";
-import { Auctions } from "../../api/auctions";
+import { Auctions } from "../../api/Auctions";
 import { useState, useEffect } from "react";
 
 export const AuctionDetails = () => {

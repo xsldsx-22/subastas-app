@@ -12,7 +12,7 @@ from "meteor/meteor";
 import {
   Auctions
 }
-from "../../api/auctions";
+from "../../api/Auctions";
 
 export const Profile = () => {
 
