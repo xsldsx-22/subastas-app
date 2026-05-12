@@ -1,186 +1,68 @@
-import React
-from "react";
+import React from "react";
+import { Link } from "react-router-dom";
+import { Meteor } from "meteor/meteor";
 
-import {
-  Link
-}
-from "react-router-dom";
+export const Navbar = ({ user }) => {
 
-import { Meteor }
-from "meteor/meteor";
-
-import {
-  useTracker
-}
-from "meteor/react-meteor-data";
-
-export const Navbar = () => {
-  
-  const toggleDarkMode =
-  () => {
-
-    document.body
-    .classList.toggle(
-      "dark-mode"
-    );
-
-  };
-
-  // USER
-  const user =
-    useTracker(() => {
-
-      Meteor.subscribe(
-        "allUsers"
-      );
-
-      return Meteor.user();
-
-    });
-
-  // LOGOUT
-  const handleLogout = () => {
-
+  const logout = () => {
     Meteor.logout();
-
   };
 
   return (
+    <header className="navbar">
 
-    <nav className="navbar">
-
-      {/* LOGO */}
-
-      <Link to="/">
-
-        <h2>
-          Subastas Pro
-        </h2>
-
+      <Link to="/" className="navbar-logo">
+        🔨 SubastasPro
       </Link>
 
-      {/* LINKS */}
-
-      <div
-        className="nav-links"
-      >
-
-        {/* CATÁLOGO */}
-
-        <Link to="/catalog">
-
-          Catálogo
-
-        </Link>
-        {user && (
-
-  <Link to="/cart">
-
-    🛒
-
-    {" "}
-
-    {
-
-      user?.profile?.cart
-      ?.length || 0
-
-    }
-
-  </Link>
-
-)}
-
-        {/* CREAR */}
+      <nav className="navbar-links">
+        <Link to="/">Inicio</Link>
+        <Link to="/catalog">Catálogo</Link>
 
         {user && (
-
-          <Link
-            to="/create-auction"
-          >
-
-            Crear
-
-          </Link>
-
-        )}
-
-        {/* PERFIL */}
-
-        {user && (
-
-          <Link to="/profile">
-
-            Perfil
-
-          </Link>
-
-        )}
-
-        {/* ADMIN */}
-
-        {user?.profile?.role ===
-          "admin" && (
-
-          <Link to="/admin">
-
-            Panel Admin
-
-          </Link>
-
-        )}
-
-        {/* LOGIN / LOGOUT */}
-
-        {!user ? (
-
           <>
-
-            <Link to="/login">
-
-              Login
-
-            </Link>
-
-            <Link to="/register">
-
-              Registro
-
-            </Link>
-
+            <Link to="/create-auction"> Crear Subasta </Link>
+            <Link to="/favorites">Favoritos</Link>
+            <Link to="/cart">Carrito</Link>
           </>
+        )}
 
-        ) : (
+        {user?.profile?.role === "admin" && (
+          <Link to="/admin">
+            Admin
+          </Link>
+        )}
+      </nav>
 
+      <div className="navbar-actions">
+
+        {user ? (
           <>
-
-            <span>
-
-              {
-                user.emails?.[0]
-                ?.address
-              }
-
-            </span>
+            <Link to="/profile" className="navbar-user">
+              👤 {user.username}
+            </Link>
 
             <button
-              onClick={
-                handleLogout
-              }
+              className="btn-navbar logout"
+              onClick={logout}
             >
-
               Cerrar sesión
-
             </button>
-
           </>
+        ) : (
+          <>
+            <Link to="/login" className="btn-navbar secondary">
+              Iniciar sesión
+            </Link>
 
+            <Link to="/register" className="btn-navbar primary">
+              Registrarse
+            </Link>
+          </>
         )}
 
       </div>
 
-    </nav>
-
+    </header>
   );
-
 };

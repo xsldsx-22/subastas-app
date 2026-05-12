@@ -1,227 +1,337 @@
-import React from "react"; import { useParams } from "react-router-dom";
-import { Meteor } from "meteor/meteor";
+import React, { useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import { useTracker } from "meteor/react-meteor-data";
+import { Meteor } from "meteor/meteor";
 import { Auctions } from "../../api/auctions";
+import { useState, useEffect } from "react";
 
 export const AuctionDetails = () => {
 
+  const getTimeLeft = (endsAt) => {
+  const total = new Date(endsAt) - new Date();
+
+  if (total <= 0) return "Finalizada";
+
+  const hours = Math.floor(total / (1000 * 60 * 60));
+  const minutes = Math.floor((total / 1000 / 60) % 60);
+  const seconds = Math.floor((total / 1000) % 60);
+
+  return `${hours}h ${minutes}m ${seconds}s`;
+};
+
   const { id } = useParams();
 
-  const isLoading = useTracker(() => {
-
-      const sub =
-        Meteor.subscribe(
-          "allAuctions"
-        );
-        Meteor.subscribe(
-          "allUsers"
-        );
-
-      return !sub.ready();
-
-    });
+  const [bidAmount, setBidAmount] =
+    useState("");
 
   const auction =
     useTracker(() => {
 
-      return Auctions.findOne(id);
+      Meteor.subscribe(
+        "auctions"
+      );
+
+      return Auctions.findOne({_id: id});
 
     });
-
-  if (isLoading) {
-
-    return <h1>Cargando...</h1>;
-
-  }
 
   if (!auction) {
 
     return (
-      <h1>
-        Subasta no encontrada
-      </h1>
+
+      <div className="page-container">
+
+        <h2>
+          Cargando subasta...
+        </h2>
+
+      </div>
+
     );
 
   }
 
-  return (
+  const bids =
+    auction.bids || [];
 
-    <section className="details-page">
+  const currentPrice =
+    auction.price || 0;
 
-      {/* IMAGEN */}
+  const handleBid = () => {
 
-      <div className="details-image">
+    if (!Meteor.user()) {
 
-        <img
-          src={auction.image || ""}
-          alt={auction.title || ""}
-        />
+      alert(
+        "Debes iniciar sesión"
+      );
 
-      </div>
+      return;
 
-      {/* INFO */}
+    }
 
-      <div className="details-info">
+    const amount =
+      Number(bidAmount);
 
-        <h1>
-          {auction.title || "Sin título"}
-        </h1>
+    if (
+      amount <= currentPrice
+    ) {
 
-        <h2>
-          ${auction.price || 0}
-        </h2>
+      alert("La puja debe ser mayor a $" + currentPrice);
 
-        <p>
+      return;
 
-          <strong>
-            Categoría:
-          </strong>
+    }
 
-          {" "}
+    Meteor.call(
 
-          {
-            auction.category
-            || "Sin categoría"
-          }
+      "placeBid",
 
-        </p>
+      auction._id,
 
-        <p>
+      amount,
 
-          <strong>
-            Estado:
-          </strong>
+      (error) => {
 
-          {" "}
-
-          {
-            auction.condition
-            || "No especificado"
-          }
-
-        </p>
-
-        <p>
-
-          <strong>
-            Descripción:
-          </strong>
-
-          {" "}
-
-          {
-            auction.description
-            || "Sin descripción"
-          }
-
-        </p>
-        {/* BOTÓN ELIMINAR */}
-
-{(Meteor.userId() ===
-  auction.owner ||
-
-  Meteor.user()?.profile
-  ?.role === "admin") && (
-
-  <button
-
-    onClick={() => {
-
-      Meteor.call(
-
-        "removeAuction",
-
-        auction._id,
-
-        () => {
+        if (error) {
 
           alert(
-            "Subasta eliminada"
+            error.reason
           );
-
-          window.location.href =
-            "/catalog";
 
         }
 
-      );
+        else {
 
-    }}
+          setBidAmount("");
 
-  >
+        }
 
-    🗑️ Eliminar
+      }
 
-  </button>
+    );
 
-)}
-{/* HISTORIAL */}
+  };
 
-<div
-  className="bids-history"
->
+  return (
 
-  <h2>
-    Historial de Pujas
-  </h2>
+    <div className="details-page">
 
-  {
+      <Link
+        to="/catalog"
+        className="btn-back"
+      >
 
-    auction.bids?.length > 0
+        ← Regresar
 
-    ? (
+      </Link>
 
-      auction.bids
-      .slice()
-      .reverse()
-      .map((bid, index) => (
+      <div className="details-grid">
 
-        <div
-          key={index}
-          className="bid-item"
-        >
+        <div className="details-left">
 
-          <p>
+          <div className="details-image-wrap">
 
-            💰 ${bid.amount}
+            <img
+              src={
+                auction.image ||
+                "https://via.placeholder.com/500"
+              }
+              alt={
+                auction.title
+              }
+            />
 
-          </p>
+          </div>
 
-          <p>
+          <div className="details-description">
 
-            Usuario:
+            <h3>
+              Descripción
+            </h3>
 
-            {" "}
+            <p>
+              {auction.description}
+            </p>
 
-            {
-              Meteor.users.findOne(
-                bid.userId
-                      )?.emails?.[0]
-                      ?.address || "Usuario"
-            }
+            <div className="details-meta">
 
-          </p>
+              <div className="meta-row">
+
+                <span>
+                  Categoría:
+                </span>
+
+                <span className="badge-category">
+
+                  {auction.category}
+
+                </span>
+
+              </div>
+
+              <div className="meta-row">
+
+                <span>
+                  Vendedor:
+                </span>
+
+                <strong>
+
+                  {
+                    auction.ownerName ||
+                    "Usuario"
+                  }
+
+                </strong>
+
+              </div>
+
+              <div className="meta-row">
+
+                <span>
+                  Precio actual:
+                </span>
+
+                <strong>
+
+                  $
+                  {
+                    auction.price?.toLocaleString()
+                  }
+
+                </strong>
+
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
-      ))
+        <div className="details-right">
 
-    )
+          <h1 className="details-title">
 
-    : (
+            {auction.title}
 
-      <p>
-        Sin pujas aún
-      </p>
+          </h1>
 
-    )
+          <div className="price-box">
 
-  }
+            <div>
+              💲 Precio Actual
+            </div>
 
-</div>
+            <div className="price-value">
+
+              $
+              {
+                currentPrice.toLocaleString()
+              }
+
+            </div>
+
+          </div>
+
+          <div className="bid-card">
+
+            <label>
+              Tu Puja
+            </label>
+
+            <div className="bid-section">
+
+              <input
+                type="number"
+                placeholder={"Mínimo $" + (currentPrice + 1)}
+                value={bidAmount}
+                onChange={(e) =>
+                  setBidAmount(
+                    e.target.value
+                  )
+                }
+              />
+
+              <button
+                onClick={handleBid}
+              >
+
+                🔨 Pujar
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <div className="history-card">
+
+            <h3>
+
+              Historial de Pujas
+              ({bids.length})
+
+            </h3>
+
+            {
+
+              bids.length === 0
+
+              ? (
+
+                <p className="empty-history">
+
+                  Aún no hay pujas
+
+                </p>
+
+              )
+
+              : (
+
+                bids.map(
+                  (bid, index) => (
+
+                    <div
+                      key={index}
+                      className="history-item"
+                    >
+
+                      <span className="history-user">
+
+                        {
+                          bid.username ||
+                          "Usuario"
+                        }
+
+                      </span>
+
+                      <span className="history-price">
+
+                        $
+                        {
+                          bid.amount.toLocaleString()
+                        }
+
+                      </span>
+
+                    </div>
+
+                  )
+                )
+
+              )
+
+            }
+
+          </div>
+
+        </div>
+
       </div>
 
-    </section>
+    </div>
 
   );
 

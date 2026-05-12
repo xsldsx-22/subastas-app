@@ -16,7 +16,7 @@ from "../../api/auctions";
 
 export const Cart = () => {
 
-  // SUB
+  
   const isLoading =
     useTracker(() => {
 
@@ -29,18 +29,15 @@ export const Cart = () => {
 
     });
 
-  // USER
   const user =
     useTracker(() =>
       Meteor.user()
     );
 
-  // IDS
   const cartIds =
     user?.profile?.cart
     || [];
 
-  // PRODUCTOS
   const auctions =
     useTracker(() => {
 
@@ -56,7 +53,7 @@ export const Cart = () => {
 
     });
 
-  // TOTAL
+  
   const total =
     auctions.reduce(
 
@@ -68,97 +65,156 @@ export const Cart = () => {
 
     );
 
-  // LOADING
   if (isLoading) {
 
     return <h1>Cargando...</h1>;
 
   }
 
-  return (
+ return (
 
-    <section
-      className="catalog-page"
-    >
+  <section
+    className="cart-page"
+  >
 
-      <h1>
-        Carrito
-      </h1>
+    <h1>
 
-      {
+      Mi Carrito
 
-        auctions.length > 0
+    </h1>
 
-        ? (
+    {
 
-          auctions.map(
-            (item) => (
+      auctions.length > 0
 
-              <div
+      ? (
 
-                key={item._id}
+        <>
 
-                className="bid-item"
+          <div
+            className="
+            cart-grid
+            "
+          >
 
-              >
+            {
 
-                <h3>
-                  {item.title}
-                </h3>
+              auctions.map(
+                (item) => (
 
-                <p>
-                  ${item.price}
-                </p>
+                  <div
 
-                <button
-
-                  onClick={() => {
-
-                    Meteor.call(
-
-                      "toggleCart",
-
+                    key={
                       item._id
+                    }
 
-                    );
+                    className="
+                    cart-card
+                    "
 
-                  }}
+                  >
 
-                >
+                    <img
 
-                  ❌ Quitar
+                      src={
+                        item.image
+                      }
 
-                </button>
+                    />
 
-              </div>
+                    <div>
 
-            )
-          )
+                      <h3>
 
-        )
+                        {
+                          item.title
+                        }
 
-        : (
+                      </h3>
 
-          <p>
-            Tu carrito está vacío
-          </p>
+                      <p>
 
-        )
+                        $
+                        {item.price}
 
-      }
+                      </p>
 
-      <h2>
+                      <button
 
-        Total:
+                        onClick={() => {
 
-        {" "}
+                          Meteor.call(
 
-        ${total}
+                            "toggleCart",
 
-      </h2>
+                            item._id
 
-    </section>
+                          );
 
-  );
+                        }}
 
-};
+                      >
+
+                        Quitar
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                )
+              )
+
+            }
+
+          </div>
+
+          <div
+            className="
+            cart-total
+            "
+          >
+
+            <h2>
+
+              Total:
+
+              {" "}
+
+              ${total}
+
+            </h2>
+
+            <button
+  className="btn-checkout"
+  onClick={() => {
+    alert("Pago realizado correctamente 💳");
+  }}
+>
+  Proceder con el pago
+</button>
+
+          </div>
+
+        </>
+
+      )
+
+      : (
+
+        <p>
+
+          Tu carrito
+          está vacío
+
+        </p>
+
+      )
+
+    }
+
+  </section>
+
+);
+}

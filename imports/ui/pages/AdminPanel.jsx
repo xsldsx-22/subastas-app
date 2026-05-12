@@ -1,34 +1,50 @@
-import React
-from "react";
+import React from "react";
 
 import {
   useTracker
-}
-from "meteor/react-meteor-data";
+} from "meteor/react-meteor-data";
 
-import { Meteor }
-from "meteor/meteor";
+import { Meteor } from "meteor/meteor";
 
 export const AdminPanel = () => {
 
-  const users =
-    useTracker(() => {
+  const users = useTracker(() => {
 
-      Meteor.subscribe(
-        "allUsers"
-      );
+    Meteor.subscribe("allUsers");
 
-      return Meteor.users
-        .find()
-        .fetch();
+    return Meteor.users
+      .find()
+      .fetch();
 
-    });
+  });
+
+  const handleDelete = (userId) => {
+
+    const confirmDelete = window.confirm(
+      "¿Eliminar usuario?"
+    );
+
+    if (!confirmDelete) return;
+
+    Meteor.call(
+      "deleteUser",
+      userId,
+      (error) => {
+
+        if (error) {
+          alert(error.reason);
+        } else {
+          alert("Usuario eliminado");
+        }
+
+      }
+    );
+
+  };
 
   return (
 
-    <section
-      className="catalog-page"
-    >
+    <section className="catalog-page">
 
       <h1>
         Panel Admin
@@ -36,56 +52,67 @@ export const AdminPanel = () => {
 
       {
 
-        users.map(
-          (user) => (
+        users.map((user) => (
 
-            <div
+          <div
+            key={user._id}
+            className="bid-item"
+          >
 
-              key={user._id}
+            <p>
+              <strong>
+                Usuario:
+              </strong>
 
-              className="bid-item"
+              {" "}
 
-            >
+              {
+                user.username ||
+                user.profile?.username ||
+                "Sin nombre"
+              }
+            </p>
 
-              <p>
+            <p>
 
-                {
-
-                  user.profile?.username
-                }
-
-              </p>
-
-              <p>
-
+              <strong>
                 Rol:
+              </strong>
 
-                {" "}
+              {" "}
 
-                {
+              {
+                user.profile?.role ||
+                "usuario"
+              }
 
-                  user.profile
-                  ?.role
-                  || "usuario"
+            </p>
 
-                }
+            <p>
 
-              </p>
-              <p>
+              <strong>
+                Correo:
+              </strong>
 
-  {
+              {" "}
 
-    user.emails?.[0]
-    ?.address
+              {
+                user.emails?.[0]?.address
+              }
 
-  }
+            </p>
 
-</p>
+            <button
+              onClick={() =>
+                handleDelete(user._id)
+              }
+            >
+              Eliminar usuario
+            </button>
 
-            </div>
+          </div>
 
-          )
-        )
+        ))
 
       }
 

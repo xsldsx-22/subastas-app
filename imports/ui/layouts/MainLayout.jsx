@@ -1,79 +1,29 @@
-import React
-from "react";
+import React from "react";
+import { BrowserRouter, Routes, Route }from "react-router-dom";
+import { Navbar } from "../components/Navbar";
+import { Home } from "../pages/Home";
+import { Login } from "../pages/Login";
+import { Register } from "../pages/Register";
+import { Catalog } from "../pages/Catalog";
+import { CreateAuction } from "../pages/CreateAuction";
+import { Profile } from "../pages/Profile";
+import { AuctionDetails } from "../pages/AuctionDetails";
+import { AdminPanel } from "../pages/AdminPanel";
+import { Favorites } from "../pages/Favorites";
+import { Cart } from "../pages/Cart";
+import { Footer } from "../components/Footer";
+import { useTracker } from "meteor/react-meteor-data";
+import { Meteor } from "meteor/meteor";
 
-import {
-
-  BrowserRouter,
-
-  Routes,
-
-  Route
-
-}
-from "react-router-dom";
-
-import {
-  Navbar
-}
-from "../components/Navbar";
-
-import {
-  Home
-}
-from "../pages/Home";
-
-import {
-  Login
-}
-from "../pages/Login";
-
-import {
-  Register
-}
-from "../pages/Register";
-
-import {
-  Catalog
-}
-from "../pages/Catalog";
-
-import {
-  CreateAuction
-}
-from "../pages/CreateAuction";
-
-import {
-  Profile
-}
-from "../pages/Profile";
-
-import {
-  AuctionDetails
-}
-from "../pages/AuctionDetails";
-
-import {
-  AdminPanel
-}
-from "../pages/AdminPanel";
-
-import {
-  Favorites
-}
-from "../pages/Favorites";
-
-import {
-  Cart
-}
-from "../pages/Cart";
 
 export const MainLayout = () => {
+  const user = useTracker(() => Meteor.user());
 
   return (
 
     <BrowserRouter>
 
-      <Navbar />
+      <Navbar user={user}/>
 
       <Routes>
 
@@ -136,6 +86,7 @@ export const MainLayout = () => {
         />
 
       </Routes>
+      <Footer />
 
     </BrowserRouter>
 

@@ -1,218 +1,180 @@
-import React,
-{
-  useEffect,
-  useState
-}
-from "react";
-
-import { Meteor }
-from "meteor/meteor";
-
-import {
-  useTracker
-}
-from "meteor/react-meteor-data";
-
-import {
-  Auctions
-}
-from "../../api/auctions";
-
-import {
-  AuctionCard
-}
-from "../components/AuctionCard";
+import React, { useState } from "react";
+import { useTracker } from "meteor/react-meteor-data";
+import { Link } from "react-router-dom";
+import { Meteor } from "meteor/meteor";
+import { Auctions } from "../../api/auctions";
+import { useState, useEffect } from "react";
 
 export const Catalog = () => {
 
-  // STATES
-  const [search,
-    setSearch
-  ] =
+const getTimeLeft = (endsAt) => {
+  const total = new Date(endsAt) - new Date();
+
+  if (total <= 0) return "Finalizada";
+
+  const hours = Math.floor(total / (1000 * 60 * 60));
+  const minutes = Math.floor((total / 1000 / 60) % 60);
+  const seconds = Math.floor((total / 1000) % 60);
+
+  return `${hours}h ${minutes}m ${seconds}s`;
+};
+
+  const [search, setSearch] =
     useState("");
 
-  const [category,
-    setCategory
-  ] =
-    useState("");
+  const [sortType, setSortType] =
+    useState("recent");
 
-  const [sort,
-    setSort
-  ] =
-    useState("");
+  const [category, setCategory] =
+    useState("all");
 
-  // SUB
-  useEffect(() => {
+  const user =
+    useTracker(() => {
+      return Meteor.user();
+    });
 
-    Meteor.subscribe(
-      "allAuctions"
-    );
-
-  }, []);
-
-  // SUBASTAS
   const auctions =
     useTracker(() => {
 
-      let selector = {};
+      Meteor.subscribe(
+        "auctions"
+      );
 
-      // BUSCAR
-      if (search) {
-
-        selector.title = {
-
-          $regex:
-            search,
-
-          $options:
-            "i"
-
-        };
-
-      }
-
-      // CATEGORÍA
-      if (category) {
-
-        selector.category =
-          category;
-
-      }
-
-      // ORDEN
-      let sortOption = {};
-
-      // MENOR PRECIO
-      if (
-        sort === "low"
-      ) {
-
-        sortOption = {
-          price: 1
-        };
-
-      }
-
-      // MAYOR PRECIO
-      if (
-        sort === "high"
-      ) {
-
-        sortOption = {
-          price: -1
-        };
-
-      }
-
-      // RECIENTES
-      if (
-        sort === "recent"
-      ) {
-
-        sortOption = {
-          createdAt: -1
-        };
-
-      }
-
-      return Auctions.find(
-
-        selector,
-
-        {
-          sort:
-            sortOption
-        }
-
-      ).fetch();
+      return Auctions.find().fetch();
 
     });
 
+  let filteredAuctions =
+    auctions.filter((auction) => {
+
+      const matchesSearch =
+
+        auction.title
+          ?.toLowerCase()
+          .includes(
+            search.toLowerCase()
+          );
+
+      const matchesCategory =
+
+        category === "all"
+          ||
+        auction.category === category;
+
+      return (
+        matchesSearch &&
+        matchesCategory
+      );
+
+    });
+
+  if (sortType === "low") {
+
+    filteredAuctions.sort(
+      (a, b) =>
+        a.price - b.price
+    );
+
+  }
+
+  if (sortType === "high") {
+
+    filteredAuctions.sort(
+      (a, b) =>
+        b.price - a.price
+    );
+
+  }
+
+  if (sortType === "recent") {
+
+    filteredAuctions.sort(
+      (a, b) =>
+        new Date(b.createdAt) -
+        new Date(a.createdAt)
+    );
+
+  }
+
+  const toggleFavorite = (
+    auctionId
+  ) => {
+
+    if (!user) {
+
+      alert(
+        "Debes iniciar sesión"
+      );
+
+      return;
+
+    }
+
+    Meteor.call(
+      "toggleFavorite",
+      auctionId
+    );
+
+  };
+
+  const toggleCart = (
+    auctionId
+  ) => {
+
+    if (!user) {
+
+      alert(
+        "Debes iniciar sesión"
+      );
+
+      return;
+
+    }
+
+    Meteor.call(
+      "toggleCart",
+      auctionId
+    );
+
+  };
+
   return (
 
-    <section
-      className="catalog-page"
-    >
+    <div className="catalog-page">
 
-      <h1>
-        Catálogo
-      </h1>
+      <div className="catalog-header">
 
-      {/* FILTROS */}
-
-      <div
-        className="filters"
-      >
-
-        {/* BUSCADOR */}
+        <h1>
+          Catálogo de Subastas
+        </h1>
 
         <input
-
           type="text"
-
-          placeholder="Buscar..."
-
+          placeholder="Buscar subasta..."
           value={search}
-
           onChange={(e) =>
             setSearch(
               e.target.value
             )
           }
-
+          className="search-input"
         />
 
-        {/* CATEGORÍA */}
+      </div>
+
+      <div className="catalog-filters">
 
         <select
-
-          value={category}
-
+          value={sortType}
           onChange={(e) =>
-            setCategory(
+            setSortType(
               e.target.value
             )
           }
-
         >
 
-          <option value="Tecnología">
-  Tecnología
-</option>
-
-<option value="Gaming">
-  Gaming
-</option>
-
-<option value="Ropa">
-  Ropa
-</option>
-
-<option value="Hogar">
-  Hogar
-</option>
-
-<option value="Coleccionables">
-  Coleccionables
-</option>
-        </select>
-
-        {/* ORDEN */}
-
-        <select
-
-          value={sort}
-
-          onChange={(e) =>
-            setSort(
-              e.target.value
-            )
-          }
-
-        >
-
-          <option value="">
-            Ordenar
+          <option value="recent">
+            Más recientes
           </option>
 
           <option value="low">
@@ -223,65 +185,216 @@ export const Catalog = () => {
             Mayor precio
           </option>
 
-          <option value="recent">
-            Más recientes
+        </select>
+
+        <select
+          value={category}
+          onChange={(e) =>
+            setCategory(
+              e.target.value
+            )
+          }
+        >
+
+          <option value="all">
+            Todas las categorías
+          </option>
+
+          <option value="Tecnología">
+            Tecnología
+          </option>
+
+          <option value="Gaming">
+            Gaming
+          </option>
+
+          <option value="Ropa">
+            Ropa
+          </option>
+
+          <option value="Hogar">
+            Hogar
+          </option>
+
+          <option value="Coleccionables">
+            Coleccionables
           </option>
 
         </select>
 
       </div>
 
-      {/* GRID */}
+      <div className="auction-grid">
 
-      <div
-        className="grid-productos"
-      >
+        {
 
-        {auctions.map(
-          (auction) => (
+          filteredAuctions.length === 0
 
-            <AuctionCard
+            ? (
 
-              key={
-                auction._id
-              }
+              <p>
+                No se encontraron
+                subastas
+              </p>
 
-              _id={
-                auction._id
-              }
+            )
 
-              image={
-                auction.image
-              }
+            : (
 
-              title={
-                auction.title
-              }
+              filteredAuctions.map(
+                (auction) => {
 
-              price={
-                auction.price
-              }
+                  const useCountdown = (endsAt) => {
+  const [timeLeft, setTimeLeft] = useState("");
 
-              hours={
-                auction.hours
-              }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const total = new Date(endsAt) - new Date();
 
-              endsAt={
-                auction.endsAt
-              }
+      if (total <= 0) {
+        setTimeLeft("Finalizada");
+        clearInterval(interval);
+        return;
+      }
 
-              lastBidBy={
-                auction.lastBidBy
-              }
+      const hours = Math.floor(total / (1000 * 60 * 60));
+      const minutes = Math.floor((total / 1000 / 60) % 60);
+      const seconds = Math.floor((total / 1000) % 60);
 
-            />
+      setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+    }, 1000);
 
-          )
-        )}
+    return () => clearInterval(interval);
+  }, [endsAt]);
+
+  return timeLeft;
+};
+                  const isFavorite =
+
+                    user?.profile
+                      ?.favorites
+                      ?.includes(
+                        auction._id
+                      );
+
+                  const isInCart =
+
+                    user?.profile
+                      ?.cart
+                      ?.includes(
+                        auction._id
+                      );
+
+                  return (
+
+                    <div
+                      key={auction._id}
+                      className="auction-card"
+                    >
+
+                      <img
+                        src={
+                          auction.image ||
+                          "https://via.placeholder.com/300"
+                        }
+                        alt={
+                          auction.title
+                        }
+                      />
+
+                      <div className="auction-info">
+                        <div
+  className={
+    auction.status === "finalizada"
+      ? "status-finished"
+      : "status-active"
+  }
+>
+  {auction.status || "activa"}
+</div>
+
+                        <h3>
+                          {auction.title}
+                        </h3>
+
+                        <p>
+                          {auction.description}
+                        </p>
+
+                        <div className="auction-price">
+
+                          <span>
+                            Precio actual:
+                          </span>
+
+                          <strong>
+                            $
+                            {auction.price?.toLocaleString()}
+                          </strong>
+
+                        </div>
+
+                        <div className="auction-actions">
+
+                          <Link
+                            to={`/auction/${auction._id}`}
+                            className="btn-details"
+                          >
+                            Ver detalles
+                          </Link>
+
+                          <button
+                            onClick={() =>
+                              toggleFavorite(
+                                auction._id
+                              )
+                            }
+                            className="btn-favorite"
+                          >
+
+                            {
+                              isFavorite
+                                ? "❤️"
+                                : "🤍"
+                            }
+
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              toggleCart(
+                                auction._id
+                              )
+                            }
+                            className="btn-cart"
+                          >
+
+                            {
+                              isInCart
+                                ? "🛒✓"
+                                : "🛒"
+                            }
+
+                          </button>
+
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                  );
+
+                }
+              )
+
+            )
+
+        }
 
       </div>
 
-    </section>
+    </div>
 
   );
 

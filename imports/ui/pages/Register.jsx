@@ -1,109 +1,106 @@
 import React, { useState } from "react";
 import { Accounts } from "meteor/accounts-base";
+import { Link, useNavigate } from "react-router-dom";
 
 export const Register = () => {
+  const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] =
-    useState("");
+  const [password, setPassword] = useState("");
 
-  const handleRegister = () => {
+  const handleRegister = (e) => {
+    e.preventDefault();
 
-    Accounts.createUser({
-
-  email,
-
-  password,
-
-  profile: {
-
-    username,
-
-    role: "user",
-
-    favorites: [],
-
-    cart: []
-
-  }
-
-},
-(error) => {
-
-  if (error) {
-
-    toast.error(
-      error.reason
+    Accounts.createUser(
+      {
+        username,
+        email,
+        password,
+      },
+      (error) => {
+        if (error) {
+          alert(error.reason);
+        } else {
+          navigate("/");
+        }
+      }
     );
-
-    return;
-
-  }
-
-  toast.success(
-    "Cuenta creada"
-  );
-
-});
-
   };
 
   return (
+    <div className="login-page">
 
-    <section className="auth-container">
+      <Link to="/" className="btn-regresar">
+        ← Regresar al inicio
+      </Link>
 
-      <div className="auth-box">
+      <div className="login-card">
 
-        <h2>
-          Crear Cuenta
-        </h2>
+        <div className="login-icono register-icon">
+          🔨
+        </div>
 
-        <input
+        <h2>Crear Cuenta</h2>
 
-          type="text"
-          placeholder="Nombre de usuario"
-          value={username}
-          onChange={(e) =>
+        <p>
+          Regístrate para comenzar a pujar y crear subastas
+        </p>
 
-    setUsername(
-      e.target.value
-    )
+        <form onSubmit={handleRegister}>
 
-  }
+          <div className="login-campo">
+            <label>Nombre de Usuario</label>
 
-/>
+            <input
+              type="text"
+              placeholder="Karen123"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
 
-        <input
-          type="email"
-          placeholder="Correo"
+          <div className="login-campo">
+            <label>Correo Electrónico</label>
 
-          value={email}
+            <input
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-          onChange={(e) =>
-            setEmail(e.target.value)
-          }
-        />
+          <div className="login-campo">
+            <label>Contraseña</label>
 
-        <input
-          type="password"
-          placeholder="Contraseña"
+            <input
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-          value={password}
+          <button className="btn-login-submit" type="submit">
+            Registrarse
+          </button>
 
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
-        />
+        </form>
 
-        <button onClick={handleRegister}>
-          Registrarse
-        </button>
+        <div className="login-footer">
+          <p>
+            ¿Ya tienes cuenta?{" "}
+            <Link to="/login">
+              Inicia sesión aquí
+            </Link>
+          </p>
+        </div>
 
       </div>
-
-    </section>
-
+    </div>
   );
-
 };

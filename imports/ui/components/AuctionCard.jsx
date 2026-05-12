@@ -84,8 +84,8 @@ const favorites =
       <div className="card">
 
         <img src={image} />
-        <div
-  className={
+
+        <div className={
     ended
     ? "badge ended"
     : "badge active"
@@ -138,7 +138,9 @@ const favorites =
 
             e.preventDefault();
 
-          Meteor.call( "toggleCart", _id
+          Meteor.call(
+             "toggleCart", 
+             _id
 
     );
 
@@ -146,7 +148,7 @@ const favorites =
 
 >
 
-  🛒 Carrito
+  🛒 
 
 </button>
 
@@ -157,6 +159,7 @@ const favorites =
         <p>
           ${price}
         </p>
+        
 
         {/* TERMINADA */}
 
@@ -165,7 +168,7 @@ const favorites =
           <div>
 
             <h3>
-              🏆 Subasta Finalizada
+               Subasta Finalizada
             </h3>
 
             <p>

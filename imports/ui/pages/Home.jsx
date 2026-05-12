@@ -1,96 +1,175 @@
 import React from "react";
-import { AuctionCard } from "../components/AuctionCard";
+import { Link } from "react-router-dom";
+import {  useTracker } from "meteor/react-meteor-data";
+import { Meteor } from "meteor/meteor";
+import { Auctions } from "../../api/auctions";
+import {  AuctionCard } from "../components/AuctionCard"
 
 export const Home = () => {
 
+  const featured = useTracker(() => {
+
+    Meteor.subscribe(
+      "allAuctions"
+    );
+
+    return Auctions.find(
+
+      {},
+
+      {
+
+        sort: {
+
+          createdAt: -1
+
+        },
+
+        limit: 3
+
+      }
+
+    ).fetch();
+
+  });
+
   return (
 
-    <>
+    <section
+      className="home"
+    >
 
       {/* HERO */}
 
-      <section className="hero">
+      <div
+        className="hero"
+      >
 
-        <h1>
-          Encuentra las mejores subastas
-        </h1>
+        <div
+          className="hero-text"
+        >
 
-        <p>
-          Compra y vende productos en tiempo real
-        </p>
+          <h1>
 
-        <div className="buscador">
+            Compra y vende
+            en subastas
+            en tiempo real
 
-          <input
-            type="text"
-            placeholder="Buscar subastas..."
-          />
+          </h1>
 
-          <button>
-            Buscar
-          </button>
+          <p>
 
-        </div>
+            Descubre productos,
+            puja en vivo y gana
+            las mejores ofertas.
 
-      </section>
+          </p>
 
-      {/* SUBASTAS DESTACADAS */}
+          <Link
+            to="/catalog"
+          >
 
-      <section className="productos">
+            <button>
 
-        <h2>
-          Subastas Destacadas
-        </h2>
+              Explorar catálogo
 
-        <div className="grid-productos">
+            </button>
 
-          <AuctionCard
-            image="/images/audifonos.jpg"
-            title="Audífonos Gamer"
-            price="2500"
-            hours={3}
-          />
-
-          <AuctionCard
-            image="/images/laptop.jpg"
-            title="Laptop Gamer"
-            price="15000"
-            hours={5}
-          />
+          </Link>
 
         </div>
 
-      </section>
+        {/* HERO IMAGE */}
 
-      {/* TERMINAN PRONTO */}
+        <div
+          className="hero-image"
+        >
 
-      <section className="terminan-pronto">
+          <img
 
-        <h2>
-          Subastas que Terminan Pronto
-        </h2>
+            src="https://images.unsplash.com/photo-1523275335684-37898b6baf30"
 
-        <div className="grid-productos">
+            alt="hero"
 
-          <AuctionCard
-            image="/images/reloj.jpg"
-            title="Reloj Inteligente"
-            price="4500"
-            hours={2}
-          />
-
-          <AuctionCard
-            image="/images/tenis.jpg"
-            title="Tenis Nike"
-            price="3200"
-            hours={1}
           />
 
         </div>
 
-      </section>
+      </div>
+{/* FEATURED */}
 
-    </>
+<div
+  className="featured"
+>
+
+  <div
+    className="featured-top"
+  >
+
+    <h2>
+
+      Subastas destacadas
+
+    </h2>
+
+    <Link to="/catalog">
+
+      Ver todas
+
+    </Link>
+
+  </div>
+
+  <div
+    className="grid-productos"
+  >
+
+    {
+
+      featured.map(
+        (auction) => (
+
+          <AuctionCard
+
+            key={
+              auction._id
+            }
+
+            _id={
+              auction._id
+            }
+
+            image={
+              auction.image
+            }
+
+            title={
+              auction.title
+            }
+
+            price={
+              auction.price
+            }
+
+            endsAt={
+              auction.endsAt
+            }
+
+            lastBidBy={
+              auction.lastBidBy
+            }
+
+          />
+
+        )
+      )
+
+    }
+
+  </div>
+
+</div>
+    </section>
 
   );
 

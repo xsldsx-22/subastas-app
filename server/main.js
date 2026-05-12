@@ -18,7 +18,7 @@ Meteor.publish("allUsers", function () {
 
 });
 
-Meteor.publish("allAuctions", function () {
+Meteor.publish("auctions", function () {
 
   return Auctions.find();
 
@@ -78,4 +78,71 @@ Meteor.startup(async () => {
 
   }
 
+});
+Meteor.methods({
+
+  deleteUser(userId) {
+
+    const user =
+      Meteor.user();
+
+    if (
+      user?.profile
+      ?.role !== "admin"
+    ) {
+
+      throw new Meteor.Error(
+        "No autorizado"
+      );
+
+    }
+
+    Meteor.users.remove(
+      userId
+    );
+
+  }
+
+});
+Meteor.startup(() => {
+
+  Meteor.setInterval(async () => {
+
+    const now = new Date();
+
+    await Auctions.updateAsync(
+
+      {
+        endsAt: { $lt: now },
+        status: { $ne: "finalizada" }
+      },
+
+      {
+        $set: {
+          status: "finalizada"
+        }
+      },
+
+      { multi: true }
+
+    );
+
+  }, 5000);
+
+});
+import { Meteor } from "meteor/meteor";
+
+Meteor.publish("userData", function () {
+  if (!this.userId) return this.ready();
+
+  return Meteor.users.find(
+    { _id: this.userId },
+    {
+      fields: {
+        profile: 1,
+        username: 1,
+        emails: 1
+      }
+    }
+  );
 });

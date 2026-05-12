@@ -1,165 +1,283 @@
-import React, { useEffect } from "react";
-import { Meteor } from "meteor/meteor";
-import { useTracker } from "meteor/react-meteor-data";
-import { Auctions } from "../../api/auctions";
-import { AuctionCard } from "../components/AuctionCard";
+import React
+from "react";
+
+import {
+  useTracker
+}
+from "meteor/react-meteor-data";
+
+import { Meteor }
+from "meteor/meteor";
+
+import {
+  Auctions
+}
+from "../../api/auctions";
 
 export const Profile = () => {
 
-  useEffect(() => {
-
-    Meteor.subscribe(
-      "allAuctions"
-    );
-
-  }, []);
-
+  // USER
   const user =
-    Meteor.user();
-
-  const myAuctions =
-    useTracker(() =>
-
-      Auctions.find({
-
-        owner:
-          user?._id
-
-      }).fetch()
-
-    );
-
- const favorites =
     useTracker(() => {
 
-      const favIds =
-        user?.profile?.favorites
-        || [];
+      Meteor.subscribe(
+        "allUsers"
+      );
+
+      Meteor.subscribe(
+        "allAuctions"
+      );
+
+      return Meteor.user();
+
+    });
+
+  // MIS SUBASTAS
+  const myAuctions =
+    useTracker(() => {
 
       return Auctions.find({
 
-        _id: {
-          $in: favIds
-        }
+        owner:
+          user?._id
 
       }).fetch();
 
     });
 
+  // FAVORITOS
+  const favorites =
+    user?.profile
+    ?.favorites
+    || [];
+
+  // CARRITO
+  const cart =
+    user?.profile
+    ?.cart
+    || [];
+
+  if (!user) {
+
+    return <h1>
+      Inicia sesión
+    </h1>;
+
+  }
+
   return (
 
-    <section className="profile-page">
+    <section
+      className="profile-page"
+    >
 
-      {/* INFO */}
+      {/* TOP */}
 
-      <div className="profile-box">
+      <div
+        className="
+        profile-header
+        "
+      >
 
-        <h1>
-          Mi Perfil
-        </h1>
-
-        <p>
-
-          Correo:
-
-          {" "}
-
-          {
-            user?.emails?.[0]
-            ?.address
-          }
-
-        </p>
-
-        <p>
-
-          Rol:
-
-          {" "}
+        <div
+          className="
+          profile-avatar
+          "
+        >
 
           {
-            user?.profile?.role || "user"
+
+            user.profile
+            ?.username?.[0]
+
           }
 
-        </p>
+        </div>
+
+        <div>
+
+          <h1>
+
+            {
+
+              user.profile
+              ?.username
+
+            }
+
+          </h1>
+
+          <p>
+
+            {
+
+              user.emails?.[0]
+              ?.address
+
+            }
+
+          </p>
+
+          <p>
+
+            Rol:
+
+            {" "}
+
+            {
+
+              user.profile
+              ?.role
+
+            }
+
+          </p>
+
+        </div>
+
+      </div>
+
+      {/* STATS */}
+
+      <div
+        className="
+        profile-stats
+        "
+      >
+
+        <div
+          className="
+          stat-card
+          "
+        >
+
+          <h2>
+
+            {
+              myAuctions.length
+            }
+
+          </h2>
+
+          <p>
+            Subastas
+          </p>
+
+        </div>
+
+        <div
+          className="
+          stat-card
+          "
+        >
+
+          <h2>
+
+            {
+              favorites.length
+            }
+
+          </h2>
+
+          <p>
+            Favoritos
+          </p>
+
+        </div>
+
+        <div
+          className="
+          stat-card
+          "
+        >
+
+          <h2>
+
+            {
+              cart.length
+            }
+
+          </h2>
+
+          <p>
+            Carrito
+          </p>
+
+        </div>
 
       </div>
 
       {/* MIS SUBASTAS */}
 
-      <section>
+      <div
+        className="
+        my-auctions
+        "
+      >
 
         <h2>
+
           Mis Subastas
+
         </h2>
 
-        <div className="grid-productos">
+        {
 
-          {myAuctions.map(
-            (auction) => (
+          myAuctions.length > 0
 
-              <AuctionCard
+          ? (
 
-                key={auction._id}
-                _id={auction._id}
-                image={auction.image}
-                title={auction.title}
-                price={auction.price}
-                hours={auction.hours}
-                endsAt={
-                  auction.endsAt
-                }
+            myAuctions.map(
+              (auction) => (
 
-                lastBidBy={
-                  auction.lastBidBy
-                }
+                <div
 
-              />
+                  key={
+                    auction._id
+                  }
 
+                  className="
+                  bid-item
+                  "
+
+                >
+
+                  <h3>
+
+                    {
+                      auction.title
+                    }
+
+                  </h3>
+
+                  <p>
+
+                    $
+                    {auction.price}
+
+                  </p>
+
+                </div>
+
+              )
             )
-          )}
 
-        </div>
+          )
 
-      </section>
+          : (
 
-      {/* FAVORITOS */}
+            <p>
 
-      <section>
+              No tienes
+              subastas
 
-        <h2>
-          Favoritos
-        </h2>
+            </p>
 
-        <div className="grid-productos">
+          )
 
-          {favorites.map(
-            (auction) => (
+        }
 
-              <AuctionCard
-
-                key={auction._id}
-                _id={auction._id}
-                image={auction.image}
-                title={auction.title}
-                price={auction.price}
-                hours={auction.hours}
-                endsAt={
-                  auction.endsAt
-                }
-
-                lastBidBy={
-                  auction.lastBidBy
-                }
-
-              />
-
-            )
-          )}
-
-        </div>
-
-      </section>
+      </div>
 
     </section>
 
