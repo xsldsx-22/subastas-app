@@ -1819,3 +1819,35 @@ button:hover {
   font-size: 12px;
   display: inline-block;
 }
+.auction-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.auction-card {
+  width: 100%;
+}
+
+.auction-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .details-grid {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .navbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .auction-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
