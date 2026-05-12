@@ -1,6 +1,6 @@
 import { Meteor } from "meteor/meteor";
 import { check } from "meteor/check";
-import { Auctions } from "./auctions";
+import { Auctions } from "./Auctions";
 
 Meteor.methods({
 
