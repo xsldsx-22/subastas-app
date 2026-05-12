@@ -1,6 +1,6 @@
 import { Meteor } from "meteor/meteor";
 import "../imports/api/usersMethods";
-import "../imports/api/auctions";
+import "../imports/api/Auctions";
 import "../imports/api/auctionMethods";
 import { Auctions } from "../imports/api/Auctions.js";
 
