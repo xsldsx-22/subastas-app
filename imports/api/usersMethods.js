@@ -137,10 +137,10 @@ Meteor.methods({
 
     const currentUser = await Meteor.users.findOneAsync(
       { _id: this.userId },
-      { fields: { "profile.role": 1 } }
+      { fields: { role: 1 } }
     );
 
-    if (currentUser?.profile?.role !== "admin") {
+    if (currentUser?.role !== "admin") {
       throw new Meteor.Error(
         "not-authorized",
         "Solo un administrador puede eliminar usuarios."
