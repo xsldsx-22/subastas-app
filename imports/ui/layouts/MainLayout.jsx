@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import { Home } from "../pages/Home";
 import { Login } from "../pages/Login";
 import { Register } from "../pages/Register";
+import { VerifyEmail } from "../pages/VerifyEmail";
 import { Catalog } from "../pages/Catalog";
 import { CreateAuction } from "../pages/CreateAuction";
 import { Profile } from "../pages/Profile";
@@ -26,30 +27,16 @@ export const MainLayout = () => {
         <main className="app-main">
           <Routes>
             <Route path="/" element={<Home />} />
-
             <Route path="/login" element={<Login />} />
-
             <Route path="/register" element={<Register />} />
-
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
             <Route path="/catalog" element={<Catalog />} />
-
-            <Route
-              path="/create-auction"
-              element={<CreateAuction />}
-            />
-
+            <Route path="/create-auction" element={<CreateAuction />} />
             <Route path="/profile" element={<Profile />} />
-
             <Route path="/admin" element={<AdminPanel />} />
-
             <Route path="/favorites" element={<Favorites />} />
-
             <Route path="/cart" element={<Cart />} />
-
-            <Route
-              path="/auction/:id"
-              element={<AuctionDetails />}
-            />
+            <Route path="/auction/:id" element={<AuctionDetails />} />
           </Routes>
         </main>
 
