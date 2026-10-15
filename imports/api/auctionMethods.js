@@ -221,7 +221,7 @@ Meteor.methods({
       throw new Meteor.Error("not-found", "Subasta no encontrada.");
     }
 
-    const isAdmin = user.profile?.role === "admin";
+    const isAdmin = user.role === "admin";
     const isOwner = auction.owner === this.userId;
 
     if (!isAdmin && !isOwner) {
