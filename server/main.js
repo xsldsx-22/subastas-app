@@ -164,6 +164,43 @@ Meteor.publish("adminAuctions", async function () {
   return Auctions.find();
 });
 
+// Completa los nombres de las pujas históricas creadas antes de guardar el nombre del pujador.
+Meteor.startup(async () => {
+  try {
+    const legacyAuctions = await Auctions.find({
+      "bids.username": { $exists: false },
+      "bids.0": { $exists: true },
+    }).fetchAsync();
+
+    for (const auction of legacyAuctions) {
+      const enrichedBids = [];
+      for (const bid of auction.bids || []) {
+        if (bid.username || !bid.userId) {
+          enrichedBids.push(bid);
+          continue;
+        }
+
+        const bidder = await Meteor.users.findOneAsync(bid.userId, {
+          fields: { username: 1, "profile.username": 1 },
+        });
+        enrichedBids.push({
+          ...bid,
+          username:
+            bidder?.profile?.username ||
+            bidder?.username ||
+            "Usuario",
+        });
+      }
+
+      await Auctions.updateAsync(auction._id, {
+        $set: { bids: enrichedBids },
+      });
+    }
+  } catch (error) {
+    console.error("No se pudo completar el nombre de las pujas históricas:", error);
+  }
+});
+
 // Finaliza las subastas cuyo plazo terminó.
 Meteor.startup(() => {
   Meteor.setInterval(async () => {
