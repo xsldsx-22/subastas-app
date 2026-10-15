@@ -151,6 +151,7 @@ Meteor.publish("adminUsers", async function () {
         username: 1,
         emails: 1,
         profile: 1,
+        role: 1,
       },
     }
   );
