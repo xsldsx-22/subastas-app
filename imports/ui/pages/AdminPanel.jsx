@@ -60,7 +60,7 @@ export const AdminPanel = () => {
                 user.emails?.[0]?.address ||
                 "Sin nombre"}
               {" · "}
-              {user.profile?.role || "usuario"}
+              {user.role || "usuario"}
             </span>
 
             <button
