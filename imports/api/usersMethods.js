@@ -34,8 +34,18 @@ Meteor.methods({
       );
     }
 
+    const regexSpecialChars = "\\\\.^$*+?()[]{}|/";
+    const escapedEmail = [...email]
+      .map((character) =>
+        regexSpecialChars.includes(character) ? "\\\\" + character : character
+      )
+      .join("");
+
     const existingUser = await Meteor.users.findOneAsync({
-      $or: [{ username }, { "emails.address": email }],
+      $or: [
+        { username },
+        { "emails.address": { $regex: "^" + escapedEmail + "$", $options: "i" } },
+      ],
     }, { fields: { _id: 1 } });
 
     if (existingUser) {
@@ -77,8 +87,14 @@ Meteor.methods({
       throw new Meteor.Error("invalid-email", "Escribe un correo válido.");
     }
 
+    const regexSpecialChars = "\\\\.^$*+?()[]{}|/";
+    const escapedEmail = [...email]
+      .map((character) =>
+        regexSpecialChars.includes(character) ? "\\\\" + character : character
+      )
+      .join("");
     const user = await Meteor.users.findOneAsync(
-      { "emails.address": email },
+      { "emails.address": { $regex: "^" + escapedEmail + "$", $options: "i" } },
       { fields: { _id: 1, emails: 1 } }
     );
 
