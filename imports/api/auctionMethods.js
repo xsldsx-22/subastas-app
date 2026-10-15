@@ -77,7 +77,7 @@ Meteor.methods({
     check(auctionId, String);
     check(amount, Number);
 
-    await getCurrentUser(this.userId);
+    const bidder = await getCurrentUser(this.userId);
 
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new Meteor.Error("invalid-bid", "La puja no es válida.");
@@ -100,6 +100,11 @@ Meteor.methods({
         $push: {
           bids: {
             userId: this.userId,
+            username:
+              bidder.profile?.username ||
+              bidder.username ||
+              bidder.emails?.[0]?.address ||
+              "Usuario",
             amount,
             createdAt: now,
           },
