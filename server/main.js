@@ -162,10 +162,10 @@ Meteor.publish("adminAuctions", async function () {
 
   const currentUser = await Meteor.users.findOneAsync(
     { _id: this.userId },
-    { fields: { "profile.role": 1 } }
+    { fields: { role: 1 } }
   );
 
-  if (currentUser?.profile?.role !== "admin") return this.ready();
+  if (currentUser?.role !== "admin") return this.ready();
 
   return Auctions.find();
 });
