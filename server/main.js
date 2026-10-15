@@ -32,19 +32,24 @@ Accounts.onCreateUser((options, user) => {
     configuredAdminEmail && actualEmail === configuredAdminEmail
   );
 
+  // El rol vive en el documento del servidor, fuera de profile editable.
+  // Nunca se hereda un posible role suministrado por datos de cliente.
+  const safeProfile = { ...(options.profile || {}) };
+  delete safeProfile.role;
+
   return {
     ...user,
+    role: isConfiguredAdmin ? "admin" : "user",
     profile: {
-      ...(options.profile || {}),
+      ...safeProfile,
       username:
         user.username ||
-        options.profile?.username ||
+        safeProfile.username ||
         "Usuario",
-      role: isConfiguredAdmin ? "admin" : "user",
-      favorites: Array.isArray(options.profile?.favorites)
-        ? options.profile.favorites
+      favorites: Array.isArray(safeProfile.favorites)
+        ? safeProfile.favorites
         : [],
-      cart: Array.isArray(options.profile?.cart) ? options.profile.cart : [],
+      cart: Array.isArray(safeProfile.cart) ? safeProfile.cart : [],
     },
   };
 });
@@ -60,7 +65,7 @@ Meteor.startup(async () => {
   try {
     const candidates = await Meteor.users.find(
       {},
-      { fields: { emails: 1, "profile.role": 1 } }
+      { fields: { emails: 1, role: 1 } }
     ).fetchAsync();
     const admin = candidates.find((candidate) =>
       candidate.emails?.some(
@@ -75,9 +80,9 @@ Meteor.startup(async () => {
       return;
     }
 
-    if (admin.profile?.role !== "admin") {
+    if (admin.role !== "admin") {
       await Meteor.users.updateAsync(admin._id, {
-        $set: { "profile.role": "admin" },
+        $set: { role: "admin" },
       });
       console.info("Se asignó el rol admin a la cuenta configurada en ADMIN_EMAIL.");
     }
@@ -122,6 +127,7 @@ Meteor.publish("myUserData", function () {
         username: 1,
         emails: 1,
         profile: 1,
+        role: 1,
       },
     }
   );
@@ -133,10 +139,10 @@ Meteor.publish("adminUsers", async function () {
 
   const currentUser = await Meteor.users.findOneAsync(
     { _id: this.userId },
-    { fields: { "profile.role": 1 } }
+    { fields: { role: 1 } }
   );
 
-  if (currentUser?.profile?.role !== "admin") return this.ready();
+  if (currentUser?.role !== "admin") return this.ready();
 
   return Meteor.users.find(
     {},
