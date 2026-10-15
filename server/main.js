@@ -55,9 +55,14 @@ Meteor.startup(async () => {
   }
 
   try {
-    const admin = await Meteor.users.findOneAsync(
-      { "emails.address": configuredAdminEmail },
-      { fields: { _id: 1, "profile.role": 1 } }
+    const candidates = await Meteor.users.find(
+      {},
+      { fields: { emails: 1, "profile.role": 1 } }
+    ).fetchAsync();
+    const admin = candidates.find((candidate) =>
+      candidate.emails?.some(
+        (entry) => entry.address?.trim().toLowerCase() === configuredAdminEmail
+      )
     );
 
     if (!admin) {
