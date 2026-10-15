@@ -33,7 +33,7 @@ El cierre de sesión utiliza `Meteor.logout()`; si el usuario entra y sale del s
 1. Crea o conserva una cuenta con el correo que vas a establecer en `ADMIN_EMAIL`.
 2. Configura `ADMIN_EMAIL` en Render con ese mismo correo.
 3. Reinicia/re-despliega el servicio.
-4. El servidor asigna `role = "admin"` en el documento protegido de esa cuenta existente (fuera de `profile`). Si la cuenta aún no existe, crea una con ese correo; la configuración del servidor le asignará el rol.
+4. El servidor asigna `role = "admin"` en el documento protegido de esa cuenta existente (fuera de `profile`) solo después de que el correo coincida y esté verificado. Si la cuenta aún no existe, créala con ese correo y abre el enlace de verificación; el servidor habilitará el rol al terminar la verificación. El arranque del servicio también corrige el rol de una cuenta ya verificada.
 
 No añadas un formulario cliente para modificar roles. El rol debe asignarse desde el servidor y almacenarse en `Meteor.users`.
 
