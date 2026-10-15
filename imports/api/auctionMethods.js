@@ -2,7 +2,7 @@ import { Meteor } from "meteor/meteor";
 import { check } from "meteor/check";
 import { Auctions } from "./Auctions";
 
-async function getCurrentUser(userId) {
+async function getCurrentUser(userId, { requireVerifiedEmail = false } = {}) {
   if (!userId) {
     throw new Meteor.Error("no-auth", "Debes iniciar sesión.");
   }
@@ -11,6 +11,17 @@ async function getCurrentUser(userId) {
 
   if (!user) {
     throw new Meteor.Error("no-auth", "La cuenta no existe.");
+  }
+
+  if (
+    requireVerifiedEmail &&
+    user.emails?.length &&
+    !user.emails.some((entry) => entry.verified)
+  ) {
+    throw new Meteor.Error(
+      "email-not-verified",
+      "Verifica tu correo antes de realizar esta acción. Puedes solicitar otro enlace desde Iniciar sesión."
+    );
   }
 
   return user;
@@ -28,7 +39,7 @@ Meteor.methods({
       durationMinutes: Number,
     });
 
-    const user = await getCurrentUser(this.userId);
+    const user = await getCurrentUser(this.userId, { requireVerifiedEmail: true });
 
     const title = data.title.trim();
 
@@ -77,7 +88,7 @@ Meteor.methods({
     check(auctionId, String);
     check(amount, Number);
 
-    await getCurrentUser(this.userId);
+    const bidder = await getCurrentUser(this.userId, { requireVerifiedEmail: true });
 
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new Meteor.Error("invalid-bid", "La puja no es válida.");
@@ -100,6 +111,11 @@ Meteor.methods({
         $push: {
           bids: {
             userId: this.userId,
+            username:
+              bidder.profile?.username ||
+              bidder.username ||
+              bidder.emails?.[0]?.address ||
+              "Usuario",
             amount,
             createdAt: now,
           },

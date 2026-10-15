@@ -1,234 +1,87 @@
-import React, { useState } from "react";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Meteor } from "meteor/meteor";
-import {  Link } from "react-router-dom";
-import {  Countdown }from "./Countdown";
 import { useTracker } from "meteor/react-meteor-data";
+import { Countdown } from "./Countdown";
+
+const money = (value) => Number(value || 0).toLocaleString("es-MX");
 
 export const AuctionCard = ({
-
   _id,
   image,
   title,
   price,
-  hours,
+  startingPrice,
+  description,
   endsAt,
-  lastBidBy
-
+  status,
 }) => {
-
-  const [bid, setBid] =
-    useState("");
-
- 
-  const ended =
-    new Date() >
-    new Date(endsAt);
-
- 
-  const winner =
-    Meteor.users.findOne(
-      lastBidBy
-    );
-
-  const currentUser =
-  useTracker(() =>
-    Meteor.user()
-  );
-
-const favorites =
-  currentUser?.profile?.favorites || [];
-
+  const navigate = useNavigate();
+  const currentUser = useTracker(() => Meteor.user());
+  const favorites = currentUser?.profile?.favorites || [];
+  const cart = currentUser?.profile?.cart || [];
   const isFavorite = favorites.includes(_id);
+  const isInCart = cart.includes(_id);
+  const ended = status === "finalizada" || (endsAt && new Date(endsAt).getTime() <= Date.now());
 
-  const handleBid = (e) => {
-
-    e.preventDefault();
-
-    Meteor.call(
-
-      "placeBid",
-
-      _id,
-
-      Number(bid),
-
-      (error) => {
-
-        if (error) {
-
-          alert(error.reason);
-
-        } else {
-
-          alert(
-            "Puja realizada"
-          );
-
-          setBid("");
-
-        }
-
-      }
-
-    );
-
+  const toggleItem = (method) => {
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
+    Meteor.call(method, _id, (error) => {
+      if (error) alert(error.reason || "No se pudo actualizar el producto.");
+    });
   };
 
   return (
-
-    <Link
-      to={"/auction/" + _id}
-      className="card-link"
-    >
-
-      <div className="card">
-
-        <img src={image} />
-
-        <div className={
-    ended
-    ? "badge ended"
-    : "badge active"
-  }
->
-
-  {
-    ended
-    ? "FINALIZADA"
-    : "ACTIVA"
-  }
-
-</div>
-
-        {/* TOP */}
-
-        <div className="card-top">
-
-          <h3>
-            {title}
-          </h3>
-
-          <button
-
-            className="favorite-btn"
-
-            onClick={(e) => {
-
-              e.preventDefault();
-
-              Meteor.call(
-                "toggleFavorite",
-                _id
-              );
-
-            }}
-
-          >
-
-            {
-              isFavorite
-              ? "❤️"
-              : "🤍"
-            }
-
-          </button>
-          <button
-
-           onClick={(e) => {
-
-            e.preventDefault();
-
-          Meteor.call(
-             "toggleCart", 
-             _id
-
-    );
-
-  }}
-
->
-
-  🛒 
-
-</button>
-
-        </div>
-
-        {/* PRECIO */}
-
-        <p>
-          ${price}
-        </p>
-        
-
-        {/* TERMINADA */}
-
-        {ended ? (
-
-          <div>
-
-            <h3>
-               Subasta Finalizada
-            </h3>
-
-            <p>
-
-              Ganador:
-
-              {" "}
-
-              {
-                winner?.emails?.[0]?.address
-                || "Sin ganador"
-              }
-
-            </p>
-
-          </div>
-
-        ) : (
-
-          <Countdown endsAt={endsAt} />
-        )}
-
-        {/* INPUT */}
-
-        <input
-
-          type="number"
-
-          placeholder="Tu puja"
-
-          value={bid}
-
-          disabled={ended}
-
-          onClick={(e) =>
-            e.preventDefault()
-          }
-
-          onChange={(e) =>
-            setBid(e.target.value)
-          }
-
+    <article className="card auction-home-card">
+      <Link to={`/auction/${_id}`} className="card-link">
+        <img
+          src={image || "/images/laptop.jpg"}
+          alt={title || "Imagen de la subasta"}
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = "/images/laptop.jpg";
+          }}
         />
+        <div className="badge-row">
+          <span className={ended ? "badge ended" : "badge active"}>
+            {ended ? "FINALIZADA" : "ACTIVA"}
+          </span>
+        </div>
+        <div className="card-top">
+          <h3>{title}</h3>
+        </div>
+        <p className="home-card-description">{description || "Consulta los detalles del producto."}</p>
+        <p className="home-card-start-price">
+          Precio inicial: <strong>${money(startingPrice ?? price)}</strong>
+        </p>
+        <p className="home-card-current-price">
+          Precio actual: <strong>${money(price)}</strong>
+        </p>
+        {!ended && <div className="home-card-countdown"><Countdown endsAt={endsAt} /></div>}
+      </Link>
 
-        {/* BOTÓN */}
-
+      <div className="card-actions">
         <button
-
-          onClick={handleBid}
-
-          disabled={ended}
-
+          type="button"
+          className="favorite-btn"
+          onClick={() => toggleItem("toggleFavorite")}
+          aria-label={isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"}
         >
-          Pujar
+          {isFavorite ? "❤️" : "🤍"}
         </button>
-
+        <button
+          type="button"
+          className="home-card-cart-button"
+          onClick={() => toggleItem("toggleCart")}
+          aria-label={isInCart ? "Quitar del carrito" : "Agregar al carrito"}
+        >
+          {isInCart ? "🛒✓" : "🛒"}
+        </button>
+        <Link to={`/auction/${_id}`} className="btn-details">Ver detalles</Link>
       </div>
-
-    </Link>
-
+    </article>
   );
-
 };
