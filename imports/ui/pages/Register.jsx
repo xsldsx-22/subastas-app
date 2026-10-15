@@ -9,8 +9,11 @@ export const Register = () => {
   const [password, setPassword] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  const handleRegister = (e) => {
-    e.preventDefault();
+  const handleRegister = (event) => {
+    event.preventDefault();
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedUsername = username.trim();
 
     if (password.length < 8) {
       alert("La contraseña debe tener al menos 8 caracteres.");
@@ -18,11 +21,10 @@ export const Register = () => {
     }
 
     setEnviando(true);
-
     Meteor.call(
       "registerUser",
-      { username: username.trim(), email: email.trim().toLowerCase(), password },
-      (error) => {
+      { username: normalizedUsername, email: normalizedEmail, password },
+      (error, result) => {
         setEnviando(false);
 
         if (error) {
@@ -30,7 +32,11 @@ export const Register = () => {
           return;
         }
 
-        alert("Cuenta creada. Revisa tu correo y verifica la dirección antes de iniciar sesión.");
+        if (result?.emailSent) {
+          alert("Cuenta creada. Te enviamos un correo de verificación. Abre el enlace antes de pujar o publicar subastas.");
+        } else {
+          alert("La cuenta se creó, pero no se pudo enviar el correo. El administrador debe configurar el servicio de correo en Render; después puedes usar el botón de reenvío en Iniciar sesión.");
+        }
         navigate("/login", { replace: true });
       }
     );
@@ -38,24 +44,22 @@ export const Register = () => {
 
   return (
     <div className="login-page">
-      <Link to="/" className="btn-regresar">
-        ← Regresar al inicio
-      </Link>
+      <Link to="/" className="btn-regresar">← Regresar al inicio</Link>
 
       <div className="login-card">
         <div className="login-icono register-icon">🔨</div>
-        <h2>Crear Cuenta</h2>
-        <p>Regístrate para comenzar a pujar y crear subastas</p>
+        <h2>Crear cuenta</h2>
+        <p>Regístrate para comenzar a pujar y crear subastas.</p>
 
         <form onSubmit={handleRegister}>
           <div className="login-campo">
-            <label htmlFor="register-username">Nombre de Usuario</label>
+            <label htmlFor="register-username">Nombre de usuario</label>
             <input
               id="register-username"
               type="text"
               placeholder="Usuario123"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(event) => setUsername(event.target.value)}
               autoComplete="username"
               minLength={3}
               maxLength={40}
@@ -64,13 +68,13 @@ export const Register = () => {
           </div>
 
           <div className="login-campo">
-            <label htmlFor="register-email">Correo Electrónico</label>
+            <label htmlFor="register-email">Correo electrónico</label>
             <input
               id="register-email"
               type="email"
               placeholder="tu@email.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
               required
             />
@@ -83,7 +87,7 @@ export const Register = () => {
               type="password"
               placeholder="Mínimo 8 caracteres"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"
               minLength={8}
               required
@@ -96,10 +100,7 @@ export const Register = () => {
         </form>
 
         <div className="login-footer">
-          <p>
-            ¿Ya tienes cuenta?{" "}
-            <Link to="/login">Inicia sesión aquí</Link>
-          </p>
+          <p>¿Ya tienes cuenta? <Link to="/login">Inicia sesión aquí</Link></p>
         </div>
       </div>
     </div>
