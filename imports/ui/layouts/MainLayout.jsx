@@ -26,7 +26,7 @@ const RequireUser = ({ user, children }) => {
 const RequireAdmin = ({ user }) => {
   if (!Meteor.userId()) return <Navigate to="/login" replace />;
   if (!user) return <section className="page-container">Verificando permisos…</section>;
-  if (user.profile?.role !== "admin") return <Navigate to="/" replace />;
+  if (user.role !== "admin") return <Navigate to="/" replace />;
   return <AdminPanel />;
 };
 
