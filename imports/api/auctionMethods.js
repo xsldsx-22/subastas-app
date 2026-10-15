@@ -94,12 +94,30 @@ Meteor.methods({
       throw new Meteor.Error("invalid-bid", "La puja no es válida.");
     }
 
+    const auctionBeforeBid = await Auctions.findOneAsync(auctionId, {
+      fields: { owner: 1, status: 1, endsAt: 1 },
+    });
+
+    if (!auctionBeforeBid) {
+      throw new Meteor.Error("not-found", "Subasta no encontrada.");
+    }
+    if (auctionBeforeBid.owner === this.userId) {
+      throw new Meteor.Error("owner-cannot-bid", "No puedes pujar en tu propia subasta.");
+    }
+
     const now = new Date();
+    if (
+      auctionBeforeBid.status === "finalizada" ||
+      new Date(auctionBeforeBid.endsAt).getTime() <= now.getTime()
+    ) {
+      throw new Meteor.Error("ended", "La subasta terminó.");
+    }
 
    
     const updatedCount = await Auctions.updateAsync(
       {
         _id: auctionId,
+        status: { $ne: "finalizada" },
         endsAt: { $gt: now },
         price: { $lt: amount },
       },
