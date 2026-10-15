@@ -27,19 +27,14 @@ Accounts.emailTemplates.verifyEmail.text = (user, url) =>
 // Los usuarios se crean como user. Solo la cuenta cuyo correo coincide
 // con ADMIN_EMAIL configurado exclusivamente en el servidor recibe el rol admin.
 Accounts.onCreateUser((options, user) => {
-  const actualEmail = user.emails?.[0]?.address?.trim().toLowerCase();
-  const isConfiguredAdmin = Boolean(
-    configuredAdminEmail && actualEmail === configuredAdminEmail
-  );
-
-  // El rol vive en el documento del servidor, fuera de profile editable.
-  // Nunca se hereda un posible role suministrado por datos de cliente.
+  // El rol se guarda fuera de profile y nunca se toma de datos del cliente.
+  // La cuenta administradora se promueve únicamente después de verificar el correo.
   const safeProfile = { ...(options.profile || {}) };
   delete safeProfile.role;
 
   return {
     ...user,
-    role: isConfiguredAdmin ? "admin" : "user",
+    role: "user",
     profile: {
       ...safeProfile,
       username:
@@ -69,13 +64,15 @@ Meteor.startup(async () => {
     ).fetchAsync();
     const admin = candidates.find((candidate) =>
       candidate.emails?.some(
-        (entry) => entry.address?.trim().toLowerCase() === configuredAdminEmail
+        (entry) =>
+          entry.verified === true &&
+          entry.address?.trim().toLowerCase() === configuredAdminEmail
       )
     );
 
     if (!admin) {
       console.warn(
-        "ADMIN_EMAIL todavía no coincide con ninguna cuenta. Registra esa cuenta y vuelve a desplegar/reiniciar el servicio."
+        "ADMIN_EMAIL no coincide con una cuenta con correo verificado. Registra la cuenta y verifica ese correo antes de asignar el rol."
       );
       return;
     }
