@@ -2156,3 +2156,61 @@ body {
     height: calc(100vh - 64px);
   }
 }
+
+
+/* Tarjetas de subastas: indicar que el contenido abre los detalles */
+.auction-card-clickable {
+  cursor: pointer;
+}
+
+.auction-card-clickable:focus-visible {
+  outline: 3px solid #e69a35;
+  outline-offset: 3px;
+}
+
+.auction-home-card .card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.auction-home-card .card-link > p {
+  margin: 8px 18px;
+  padding: 0;
+}
+
+.auction-home-card .auction-start-price {
+  color: #687386;
+  font-size: 0.9rem;
+}
+
+.auction-home-card .auction-price {
+  color: #176b42;
+  font-weight: 700;
+}
+
+.auction-home-card .auction-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 18px 18px;
+}
+
+.auction-home-card .auction-actions button {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+}
+
+.auction-home-card .auction-actions .btn-details {
+  flex: 1;
+  text-align: center;
+}
+
+.history-date {
+  margin-top: 3px;
+  color: #778195;
+  font-size: 0.8rem;
+}
