@@ -1,11 +1,11 @@
 import { Meteor } from "meteor/meteor";
 import { Accounts } from "meteor/accounts-base";
-import { Auctions } from "../imports/api/Auctions";
+import { Auctions } from "../imports/api/Auctions.js";
 
-import "../imports/api/auctionMethods";
-import "../imports/api/usersMethods";
+import "../imports/api/auctionMethods.js";
+import "../imports/api/usersMethods.js";
 
-// Configuración de nuevos usuarios
+
 Accounts.onCreateUser((options, user) => ({
   ...user,
   profile: {
@@ -20,7 +20,6 @@ Accounts.onCreateUser((options, user) => ({
   },
 }));
 
-// Publicación del catálogo de subastas
 Meteor.publish("allAuctions", function () {
   return Auctions.find(
     {},
@@ -45,7 +44,6 @@ Meteor.publish("allAuctions", function () {
   );
 });
 
-// Datos del usuario conectado
 Meteor.publish("myUserData", function () {
   if (!this.userId) {
     return this.ready();
@@ -63,7 +61,6 @@ Meteor.publish("myUserData", function () {
   );
 });
 
-// Usuarios visibles para administradores
 Meteor.publish("adminUsers", async function () {
   if (!this.userId) {
     return this.ready();
@@ -90,7 +87,6 @@ Meteor.publish("adminUsers", async function () {
   );
 });
 
-// Subastas visibles para administradores
 Meteor.publish("adminAuctions", async function () {
   if (!this.userId) {
     return this.ready();
@@ -108,7 +104,6 @@ Meteor.publish("adminAuctions", async function () {
   return Auctions.find();
 });
 
-// Actualizar el estado de las subastas vencidas
 Meteor.startup(() => {
   Meteor.setInterval(async () => {
     try {
@@ -129,5 +124,58 @@ Meteor.startup(() => {
       );
     }
   }, 5000);
+});
+
+Meteor.startup(async () => {
+  try {
+    const auctionsWithLegacyBids = await Auctions.find({
+      bids: {
+        $elemMatch: {
+          username: { $exists: false },
+          userId: { $exists: true },
+        },
+      },
+    }).fetchAsync();
+
+    for (const auction of auctionsWithLegacyBids) {
+      const bids = [];
+
+      for (const bid of auction.bids || []) {
+        if (bid.username || !bid.userId) {
+          bids.push(bid);
+          continue;
+        }
+
+        const bidder = await Meteor.users.findOneAsync(
+          bid.userId,
+          {
+            fields: {
+              username: 1,
+              "profile.username": 1,
+              emails: 1,
+            },
+          }
+        );
+
+        bids.push({
+          ...bid,
+          username:
+            bidder?.profile?.username ||
+            bidder?.username ||
+            bidder?.emails?.[0]?.address ||
+            "Usuario",
+        });
+      }
+
+      await Auctions.updateAsync(auction._id, {
+        $set: { bids },
+      });
+    }
+  } catch (error) {
+    console.error(
+      "No se pudieron completar los nombres de pujas anteriores:",
+      error
+    );
+  }
 });
 

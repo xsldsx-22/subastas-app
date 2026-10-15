@@ -1,28 +1,34 @@
 import React, { useState } from "react";
 import { useTracker } from "meteor/react-meteor-data";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Meteor } from "meteor/meteor";
 import { Auctions } from "../../api/Auctions";
 import { Countdown } from "../components/Countdown";
+
+const money = (value) =>
+  Number(value ?? 0).toLocaleString("es-MX", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 export const Catalog = () => {
   const [search, setSearch] = useState("");
   const [sortType, setSortType] = useState("recent");
   const [category, setCategory] = useState("all");
 
-  const user = useTracker(() => {
-    return Meteor.user();
-  });
+  const navigate = useNavigate();
+  const user = useTracker(() => Meteor.user());
 
   const auctions = useTracker(() => {
     Meteor.subscribe("allAuctions");
     return Auctions.find().fetch();
   });
 
- 
-  let filteredAuctions = auctions.filter((auction) => {
-    const matchesSearch = auction.title
-      ?.toLowerCase()
+  const filteredAuctions = auctions.filter((auction) => {
+    const title = auction.title || "";
+
+    const matchesSearch = title
+      .toLowerCase()
       .includes(search.toLowerCase());
 
     const matchesCategory =
@@ -31,37 +37,43 @@ export const Catalog = () => {
     return matchesSearch && matchesCategory;
   });
 
-  
   if (sortType === "low") {
-    filteredAuctions.sort((a, b) => a.price - b.price);
+    filteredAuctions.sort(
+      (a, b) => Number(a.price || 0) - Number(b.price || 0)
+    );
   }
 
   if (sortType === "high") {
-    filteredAuctions.sort((a, b) => b.price - a.price);
+    filteredAuctions.sort(
+      (a, b) => Number(b.price || 0) - Number(a.price || 0)
+    );
   }
 
   if (sortType === "recent") {
     filteredAuctions.sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      (a, b) =>
+        new Date(b.createdAt || 0).getTime() -
+        new Date(a.createdAt || 0).getTime()
     );
   }
 
-  const toggleFavorite = (auctionId) => {
-    if (!user) {
-      alert("Debes iniciar sesión");
-      return;
-    }
-
-    Meteor.call("toggleFavorite", auctionId);
+  const openAuction = (auctionId) => {
+    navigate("/auction/" + auctionId);
   };
 
-  const toggleCart = (auctionId) => {
+  const toggleItem = (event, method, auctionId) => {
+    event.stopPropagation();
+
     if (!user) {
-      alert("Debes iniciar sesión");
+      navigate("/login");
       return;
     }
 
-    Meteor.call("toggleCart", auctionId);
+    Meteor.call(method, auctionId, (error) => {
+      if (error) {
+        alert(error.reason || "No se pudo actualizar el producto.");
+      }
+    });
   };
 
   return (
@@ -70,18 +82,20 @@ export const Catalog = () => {
         <h1>Catálogo de Subastas</h1>
 
         <input
-          type="text"
+          type="search"
           placeholder="Buscar subasta..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
           className="search-input"
+          aria-label="Buscar subastas"
         />
       </div>
 
       <div className="catalog-filters">
         <select
           value={sortType}
-          onChange={(e) => setSortType(e.target.value)}
+          onChange={(event) => setSortType(event.target.value)}
+          aria-label="Ordenar subastas"
         >
           <option value="recent">Más recientes</option>
           <option value="low">Menor precio</option>
@@ -90,7 +104,8 @@ export const Catalog = () => {
 
         <select
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(event) => setCategory(event.target.value)}
+          aria-label="Filtrar por categoría"
         >
           <option value="all">Todas las categorías</option>
           <option value="Tecnología">Tecnología</option>
@@ -103,90 +118,149 @@ export const Catalog = () => {
 
       <div className="auction-grid">
         {filteredAuctions.length === 0 ? (
-          <p>No se encontraron subastas</p>
+          <p className="empty-catalog">
+            No se encontraron subastas.
+          </p>
         ) : (
           filteredAuctions.map((auction) => {
-            const isFavorite = user?.profile?.favorites?.includes(
-              auction._id
+            const isFavorite =
+              user?.profile?.favorites?.includes(auction._id) || false;
+
+            const isInCart =
+              user?.profile?.cart?.includes(auction._id) || false;
+
+            const startingPrice = Number(
+              auction.startingPrice ?? auction.price ?? 0
             );
 
-            const isInCart = user?.profile?.cart?.includes(
-              auction._id
-            );
+            const ended =
+              auction.status === "finalizada" ||
+              (auction.endsAt &&
+                new Date(auction.endsAt).getTime() <= Date.now());
 
             return (
-              <div key={auction._id} className="auction-card">
-                <img
-                  src={
-                    auction.image ||
-                    "https://via.placeholder.com/300"
+              <article
+                key={auction._id}
+                className="auction-card auction-card-clickable"
+                role="link"
+                tabIndex={0}
+                aria-label={"Ver detalles de " + (auction.title || "subasta")}
+                onClick={() => openAuction(auction._id)}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) {
+                    return;
                   }
+
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openAuction(auction._id);
+                  }
+                }}
+              >
+                <img
+                  src={auction.image || "/images/laptop.jpg"}
                   alt={auction.title || "Subasta"}
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = "/images/laptop.jpg";
+                  }}
                 />
 
                 <div className="auction-info">
                   <div
                     className={
-                      auction.status === "finalizada"
-                        ? "status-finished"
-                        : "status-active"
+                      ended ? "status-finished" : "status-active"
                     }
                   >
-                    {auction.status || "activa"}
+                    {ended ? "Finalizada" : "Activa"}
                   </div>
 
-                  <h3>{auction.title}</h3>
+                  <h3>{auction.title || "Subasta sin título"}</h3>
 
-                  <p>{auction.description}</p>
+                  <p>
+                    {auction.description || "Sin descripción."}
+                  </p>
+
+                  <div className="auction-start-price">
+                    Precio al publicarse:{" "}
+                    <span>${money(startingPrice)}</span>
+                  </div>
 
                   <div className="auction-price">
-                    <span>Precio actual:</span>
-
-                    <strong>
-                      ${auction.price?.toLocaleString()}
-                    </strong>
+                    <span>Precio actual: </span>
+                    <strong>${money(auction.price)}</strong>
                   </div>
 
                   <div className="auction-countdown">
-                    <Countdown endsAt={auction.endsAt} />
+                    {ended ? (
+                      "Subasta finalizada"
+                    ) : (
+                      <Countdown endsAt={auction.endsAt} />
+                    )}
                   </div>
 
                   <div className="auction-actions">
-                    <Link
-                      to={`/auction/${auction._id}`}
+                    <button
+                      type="button"
                       className="btn-details"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openAuction(auction._id);
+                      }}
                     >
                       Ver detalles
-                    </Link>
+                    </button>
 
                     <button
-                      onClick={() => toggleFavorite(auction._id)}
-                      className="btn-favorite"
                       type="button"
+                      className="btn-favorite"
                       aria-label={
                         isFavorite
                           ? "Quitar de favoritos"
                           : "Agregar a favoritos"
+                      }
+                      title={
+                        isFavorite
+                          ? "Quitar de favoritos"
+                          : "Agregar a favoritos"
+                      }
+                      onClick={(event) =>
+                        toggleItem(
+                          event,
+                          "toggleFavorite",
+                          auction._id
+                        )
                       }
                     >
                       {isFavorite ? "❤️" : "🤍"}
                     </button>
 
                     <button
-                      onClick={() => toggleCart(auction._id)}
-                      className="btn-cart"
                       type="button"
+                      className="btn-cart"
                       aria-label={
                         isInCart
                           ? "Quitar del carrito"
                           : "Agregar al carrito"
+                      }
+                      title={
+                        isInCart
+                          ? "Quitar del carrito"
+                          : "Agregar al carrito"
+                      }
+                      onClick={(event) =>
+                        toggleItem(
+                          event,
+                          "toggleCart",
+                          auction._id
+                        )
                       }
                     >
                       {isInCart ? "🛒✓" : "🛒"}
                     </button>
                   </div>
                 </div>
-              </div>
+              </article>
             );
           })
         )}
@@ -194,4 +268,3 @@ export const Catalog = () => {
     </div>
   );
 };
-
