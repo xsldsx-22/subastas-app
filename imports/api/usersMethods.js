@@ -121,6 +121,34 @@ Meteor.methods({
     return true;
   },
 
+  async promoteConfiguredAdmin() {
+    if (!this.userId) return false;
+
+    const configuredAdminEmail = normalizeEmail(process.env.ADMIN_EMAIL || "");
+    if (!configuredAdminEmail) return false;
+
+    const user = await Meteor.users.findOneAsync(
+      this.userId,
+      { fields: { emails: 1, role: 1 } }
+    );
+
+    const ownsVerifiedAdminEmail = user?.emails?.some(
+      (entry) =>
+        entry.verified === true &&
+        normalizeEmail(entry.address || "") === configuredAdminEmail
+    );
+
+    if (!ownsVerifiedAdminEmail) return false;
+
+    if (user.role !== "admin") {
+      await Meteor.users.updateAsync(this.userId, {
+        $set: { role: "admin" },
+      });
+    }
+
+    return true;
+  },
+
   async deleteUser(userId) {
     check(userId, String);
 
