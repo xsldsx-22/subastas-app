@@ -147,6 +147,12 @@ export const Home = () => {
               auction.title
             }
 
+            description={auction.description}
+
+            startingPrice={auction.startingPrice}
+
+            status={auction.status}
+
             price={
               auction.price
             }
