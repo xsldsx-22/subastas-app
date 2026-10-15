@@ -137,8 +137,12 @@ Meteor.startup(() => {
 Meteor.startup(async () => {
   try {
     const auctionsWithLegacyBids = await Auctions.find({
-      "bids.0": { $exists: true },
-      "bids.username": { $exists: false },
+      bids: {
+        $elemMatch: {
+          username: { $exists: false },
+          userId: { $exists: true },
+        },
+      },
     }).fetchAsync();
 
     for (const auction of auctionsWithLegacyBids) {
