@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Accounts } from "meteor/accounts-base";
+import { Meteor } from "meteor/meteor";
 import { Link, useParams } from "react-router-dom";
 
 export const VerifyEmail = () => {
@@ -17,13 +18,26 @@ export const VerifyEmail = () => {
         setCorrecto(false);
         setMessage(
           error.reason ||
-            "El enlace de verificación no es válido o ya venció. Solicita ayuda para verificar tu cuenta."
+            "El enlace de verificación no es válido o ya venció. Solicita un nuevo enlace desde Iniciar sesión."
         );
         return;
       }
 
-      setCorrecto(true);
-      setMessage("¡Correo verificado! Ya puedes iniciar sesión.");
+      // Si este correo coincide con ADMIN_EMAIL y ya quedó verificado,
+      // el servidor puede asignar de forma segura el rol administrador.
+      Meteor.call("promoteConfiguredAdmin", (roleError, promoted) => {
+        if (!activo) return;
+
+        setCorrecto(true);
+        if (roleError) {
+          console.error("No se pudo comprobar el rol administrador:", roleError);
+          setMessage("¡Correo verificado! Ya puedes iniciar sesión.");
+        } else if (promoted) {
+          setMessage("¡Correo verificado! Tu cuenta administradora ya está habilitada.");
+        } else {
+          setMessage("¡Correo verificado! Ya puedes iniciar sesión.");
+        }
+      });
     });
 
     return () => {
