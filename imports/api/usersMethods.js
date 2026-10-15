@@ -4,6 +4,19 @@ import { check } from "meteor/check";
 
 const normalizeEmail = (email) => email.trim().toLowerCase();
 
+const emailRegex = (email) => {
+  const regexSpecialChars = String.fromCharCode(92) + ".^$*+?()[]{}|/";
+  const escapedEmail = [...email]
+    .map((character) =>
+      regexSpecialChars.includes(character)
+        ? String.fromCharCode(92) + character
+        : character
+    )
+    .join("");
+
+  return new RegExp("^" + escapedEmail + "$", "i");
+};
+
 Meteor.methods({
   async registerUser(data) {
     check(data, {
@@ -34,17 +47,56 @@ Meteor.methods({
       );
     }
 
-    const regexSpecialChars = String.fromCharCode(92) + ".^$*+?()[]{}|/";
-    const escapedEmail = [...email]
-      .map((character) =>
-        regexSpecialChars.includes(character)
-          ? String.fromCharCode(92) + character
-          : character
-      )
-      .join("");
+    const existingUser = await Meteor.users.findOneAsync(
+      {
+        $or: [
+          { username },
+          { "emails.address": emailRegex(email) },
+        ],
+      },
+      { fields: { _id: 1 } }
+    );
+
+    if (existingUser) {
+      throw new Meteor.Error(
+        "already-exists",
+        "Ya existe una cuenta con ese usuario o correo."
+      );
+    }
+
+    let userId;
+    try {
+      userId = Accounts.createUser({ username, email, password });
+    } catch (error) {
+      console.error("Error creando cuenta:", error);
+      throw new Meteor.Error(
+        "register-failed",
+        error?.reason || "No se pudo crear la cuenta. Revisa los datos."
+      );
+    }
+
+    let emailSent = false;
+    try {
+      await Accounts.sendVerificationEmail(userId, email);
+      emailSent = true;
+    } catch (error) {
+      // La cuenta ya quedó creada; el usuario puede volver a solicitar el correo.
+      console.error("No se pudo enviar el correo de verificación:", error);
+    }
+
+    return { emailSent };
+  },
+
+  async resendVerificationEmail(emailInput) {
+    check(emailInput, String);
+    const email = normalizeEmail(emailInput);
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Meteor.Error("invalid-email", "Escribe un correo válido.");
+    }
 
     const user = await Meteor.users.findOneAsync(
-      { "emails.address": { $regex: "^" + escapedEmail + "$", $options: "i" } },
+      { "emails.address": emailRegex(email) },
       { fields: { _id: 1, emails: 1 } }
     );
 
