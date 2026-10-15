@@ -2788,3 +2788,95 @@ body {
     height: 180px;
   }
 }
+
+/* Tarjetas destacadas: el contenido navega a los detalles y las acciones permanecen separadas */
+.auction-home-card .card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.auction-home-card .badge-row {
+  padding: 0 18px;
+}
+
+.auction-home-card .badge {
+  position: static;
+  margin: 12px 0 0;
+}
+
+.auction-home-card .card-top {
+  padding-bottom: 4px;
+}
+
+.auction-home-card .home-card-description {
+  margin: 0;
+  color: #687386;
+  line-height: 1.45;
+}
+
+.auction-home-card .home-card-start-price,
+.auction-home-card .home-card-current-price {
+  margin: 8px 18px;
+  padding: 0;
+}
+
+.auction-home-card .home-card-start-price {
+  color: #687386;
+  font-size: 0.9rem;
+}
+
+.auction-home-card .home-card-start-price strong {
+  color: #374151;
+}
+
+.auction-home-card .home-card-current-price {
+  color: #176b42;
+  font-weight: 650;
+}
+
+.auction-home-card .home-card-current-price strong {
+  color: #176b42;
+  font-size: 1.08rem;
+}
+
+.auction-home-card .home-card-countdown {
+  padding: 0 18px 10px;
+  color: #687386;
+  font-size: 0.9rem;
+}
+
+.auction-home-card .card-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 18px 18px;
+}
+
+.auction-home-card .card-actions button {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e1e5eb;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.auction-home-card .card-actions .btn-details {
+  flex: 1;
+  min-height: 42px;
+  padding: 10px 12px;
+  color: #fff;
+  background: #1976d2;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.auction-home-card .card-actions .btn-details:hover {
+  background: #125ea8;
+}
