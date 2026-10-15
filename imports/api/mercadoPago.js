@@ -241,18 +241,20 @@ WebApp.connectHandlers.use("/api/mercadopago/webhook", (req, res) => {
       return;
     }
 
-    if (payment.status === "approved" && order.status !== "paid") {
-      await Orders.updateAsync(order._id, {
-        $set: {
-          status: "paid",
-          paymentId: String(payment.id),
-          paymentStatus: payment.status,
-          paidAt: new Date(),
-          updatedAt: new Date(),
-        },
-      });
+    if (payment.status === "approved") {
+      if (order.status !== "paid") {
+        await Orders.updateAsync(order._id, {
+          $set: {
+            status: "paid",
+            paymentId: String(payment.id),
+            paymentStatus: payment.status,
+            paidAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+      }
 
-      // Ya cobrada la orden: quitar solo sus artículos del carrito del comprador.
+      // La eliminación es idempotente y también se reintenta en webhooks duplicados.
       await Meteor.users.updateAsync(order.buyerId, {
         $pull: { "profile.cart": { $in: order.auctionIds } },
       });
