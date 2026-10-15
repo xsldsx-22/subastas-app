@@ -4,6 +4,7 @@ import { Auctions } from "../imports/api/Auctions";
 
 import "../imports/api/auctionMethods";
 import "../imports/api/usersMethods";
+import "../imports/api/mercadoPago";
 
 const configuredAdminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
 
