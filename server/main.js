@@ -131,3 +131,41 @@ Meteor.startup(() => {
   }, 5000);
 });
 
+
+
+// Completa los nombres de las pujas antiguas para que también aparezcan en el historial.
+Meteor.startup(async () => {
+  try {
+    const auctionsWithLegacyBids = await Auctions.find({
+      "bids.0": { $exists: true },
+      "bids.username": { $exists: false },
+    }).fetchAsync();
+
+    for (const auction of auctionsWithLegacyBids) {
+      const bids = [];
+      for (const bid of auction.bids || []) {
+        if (bid.username || !bid.userId) {
+          bids.push(bid);
+          continue;
+        }
+
+        const bidder = await Meteor.users.findOneAsync(bid.userId, {
+          fields: { username: 1, "profile.username": 1, emails: 1 },
+        });
+
+        bids.push({
+          ...bid,
+          username:
+            bidder?.profile?.username ||
+            bidder?.username ||
+            bidder?.emails?.[0]?.address ||
+            "Usuario",
+        });
+      }
+
+      await Auctions.updateAsync(auction._id, { $set: { bids } });
+    }
+  } catch (error) {
+    console.error("No se pudieron completar los nombres de pujas anteriores:", error);
+  }
+});
