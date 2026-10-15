@@ -6,6 +6,9 @@ import "../imports/api/auctionMethods";
 import "../imports/api/usersMethods";
 import "../imports/api/mercadoPago";
 
+// Las cuentas solo se crean a través del método de servidor que envía verificación.
+Accounts.config({ forbidClientAccountCreation: true });
+
 const configuredAdminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
 
 // Enlaces de verificación absolutos; en Render, ROOT_URL debe ser el dominio público.
