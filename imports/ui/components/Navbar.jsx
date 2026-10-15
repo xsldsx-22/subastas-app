@@ -10,7 +10,7 @@ export default function Navbar({ user }) {
 
   const usuario = user;
   const estaLogueado = Boolean(usuario);
-  const esAdmin = usuario?.profile?.role === "admin";
+  const esAdmin = usuario?.role === "admin";
 
   const cerrarMenu = () => setMenuAbierto(false);
 
